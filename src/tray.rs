@@ -11,19 +11,18 @@ use ksni::{Status, ToolTip};
 use crate::github::Item;
 use crate::{APP_ID, Cmd, Target};
 
-pub const ICON: &str = "tbgn-symbolic";
-const ICON_UNREAD: &str = "tbgn-unread-symbolic";
+pub const ICON: &str = "github-notifications-symbolic";
+const ICON_UNREAD: &str = "github-notifications-unread";
 /// Longest menu; the rest is one click away on github.com.
 const MAX_ITEMS: usize = 25;
 const MAX_LABEL_CHARS: usize = 70;
 
-/// Puts the icons in the user's icon theme. GNOME only recolors `-symbolic`
-/// icons to match the panel when it finds them by name there; icons loaded
-/// from a tray item's own theme path keep their baked-in color.
+/// Installs named icons: the idle symbolic glyph follows the panel theme,
+/// while the regular unread icon preserves its pink color.
 pub fn install_icons() {
     let icons = [
-        (ICON, include_str!("../icons/tbgn-symbolic.svg")),
-        (ICON_UNREAD, include_str!("../icons/tbgn-unread-symbolic.svg")),
+        (ICON, include_str!("../icons/github-notifications-symbolic.svg")),
+        (ICON_UNREAD, include_str!("../icons/github-notifications-unread.svg")),
     ];
     let data_home = match env::var_os("XDG_DATA_HOME") {
         Some(dir) if !dir.is_empty() => PathBuf::from(dir),

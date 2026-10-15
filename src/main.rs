@@ -1,4 +1,4 @@
-//! Top Bar GitHub Notifier (TBGN): a GNOME top-bar icon for the GitHub
+//! GitHub Notifications: a GNOME top-bar icon for the GitHub
 //! notifications inbox.
 
 mod desktop;

@@ -196,12 +196,12 @@ impl Client {
     }
 }
 
-/// Uses `TBGN_GITHUB_TOKEN` when set, otherwise the GitHub CLI's login.
+/// Uses the configured token (including the legacy name), then the CLI login.
 fn load_token() -> Result<String, String> {
-    if let Ok(token) = std::env::var("TBGN_GITHUB_TOKEN")
-        && !token.trim().is_empty()
-    {
-        return Ok(token.trim().to_owned());
+    let primary = std::env::var("GITHUB_NOTIFICATIONS_TOKEN").ok();
+    let legacy = std::env::var("TBGN_GITHUB_TOKEN").ok();
+    if let Some(token) = configured_token(primary.as_deref(), legacy.as_deref()) {
+        return Ok(token);
     }
     let out = Command::new("gh")
         .args(["auth", "token", "--hostname", "github.com"])
@@ -212,6 +212,16 @@ fn load_token() -> Result<String, String> {
         return Err("Not signed in: run `gh auth login`".into());
     }
     Ok(token)
+}
+
+/// Prefer the renamed variable, retaining compatibility with existing installs.
+fn configured_token(primary: Option<&str>, legacy: Option<&str>) -> Option<String> {
+    primary
+        .into_iter()
+        .chain(legacy)
+        .map(str::trim)
+        .find(|token| !token.is_empty())
+        .map(str::to_owned)
 }
 
 #[derive(Deserialize)]
@@ -426,6 +436,14 @@ mod tests {
 
     const REPO: &str = "octo/hello";
     const HTML: &str = "https://github.com/octo/hello";
+
+    #[test]
+    fn renamed_token_setting_takes_precedence_and_preserves_legacy_support() {
+        assert_eq!(configured_token(Some(" new "), Some("old")), Some("new".into()));
+        assert_eq!(configured_token(Some(" "), Some(" old ")), Some("old".into()));
+        assert_eq!(configured_token(None, Some("old")), Some("old".into()));
+        assert_eq!(configured_token(None, Some(" ")), None);
+    }
 
     #[test]
     fn fallback_maps_api_subjects_to_pages() {

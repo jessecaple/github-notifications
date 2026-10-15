@@ -808,7 +808,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "tbgn"
+name = "github-notifications"
 version = "0.1.0"
 dependencies = [
  "ksni",

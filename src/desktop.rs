@@ -16,7 +16,7 @@ use crate::{APP_ID, Cmd, Target};
 const SERVICE: &str = "org.freedesktop.Notifications";
 const PATH: &str = "/org/freedesktop/Notifications";
 /// Claimed on the session bus so only one copy runs.
-const BUS_NAME: &str = "io.github.jessecaple.Tbgn";
+const BUS_NAME: &str = "io.github.jessecaple.GitHubNotifications";
 
 pub struct Notifier {
     conn: Connection,
@@ -73,7 +73,7 @@ impl Notifier {
             PATH,
             Some(SERVICE),
             "Notify",
-            &("TBGN", 0u32, ICON, summary, escape_markup(body), vec!["default", "Open"], hints, -1i32),
+            &("GitHub Notifications", 0u32, ICON, summary, escape_markup(body), vec!["default", "Open"], hints, -1i32),
         );
         match reply.and_then(|msg| msg.body().deserialize::<u32>()) {
             Ok(id) => {

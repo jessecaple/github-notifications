@@ -1,6 +1,6 @@
 # Agent notes
 
-The README covers what TBGN does and how to install it. This file holds what
+The README covers what GitHub Notifications does and how to install it. This file holds what
 the code and config don't tell you.
 
 ## Verifying a change
@@ -9,7 +9,7 @@ Unit tests cover parsing only. For any change to the tray, pop-ups or links,
 run the app and observe it. You're done when the menu labels, the URLs a click
 opens, and the `Notify` calls all match what you expect.
 
-1. Stop the installed copy with `pkill -x tbgn`. The session bus name in
+1. Stop the installed copy with `pkill -f -x "$HOME/.local/bin/github-notifications"`. The session bus name in
    `desktop.rs` allows one copy at a time.
 2. If the inbox is empty, test against read threads: in a scratch copy of the
    repo, change the poll URL to `notifications?all=true&per_page=3` and

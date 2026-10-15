@@ -1,11 +1,11 @@
 [package]
-name = "tbgn"
+name = "github-notifications"
 version = "0.1.0"
 edition = "2024"
 rust-version = "1.89"
-description = "Top Bar GitHub Notifier: your GitHub notifications inbox in the GNOME top bar"
+description = "GitHub Notifications: your GitHub notifications inbox in the GNOME top bar"
 license = "MIT"
-repository = "https://github.com/jessecaple/tbgn"
+repository = "https://github.com/jessecaple/github-notifications"
 keywords = ["github", "notifications", "gnome", "tray"]
 
 [dependencies]
