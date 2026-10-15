@@ -39,6 +39,9 @@ The script builds a release binary, installs it to `~/.local/bin/github-notifica
 GitHub Notifications to the app menu and your login items, and starts it. To upgrade, pull and
 run `./install.sh` again.
 
+At login, GitHub Notifications waits for the AppIndicator extension to become ready before
+its icon appears.
+
 To remove everything it installed:
 
 ```sh
