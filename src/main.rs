@@ -37,7 +37,12 @@ fn main() {
     let (tx, rx) = mpsc::channel();
     let notifier = Notifier::new(tx.clone()).unwrap_or_else(|e| exit(&e));
     tray::install_icons();
-    let tray = InboxTray::new(tx).spawn().unwrap_or_else(|e| exit(&format!("Couldn't create the tray icon: {e}")));
+    // Login autostart can run before GNOME's AppIndicator extension is ready.
+    // Keep the tray service alive so it registers when the watcher appears.
+    let tray = InboxTray::new(tx)
+        .assume_sni_available(true)
+        .spawn()
+        .unwrap_or_else(|e| exit(&format!("Couldn't create the tray icon: {e}")));
     let mut client = Client::new();
     let mut seen: Option<HashMap<String, String>> = None;
 
