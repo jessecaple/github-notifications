@@ -431,6 +431,20 @@ fn status_error(resp: &mut Response<Body>) -> String {
 }
 
 #[cfg(test)]
+pub(crate) fn test_item() -> Item {
+    Item {
+        id: "123".into(),
+        repo: "octo/hello".into(),
+        title: "A thread".into(),
+        kind: "Issue".into(),
+        reason: "mention".into(),
+        updated_at: "2026-10-19".into(),
+        follow_url: None,
+        fallback_url: "https://github.com/octo/hello/issues/1".into(),
+    }
+}
+
+#[cfg(test)]
 mod tests {
     use super::*;
 

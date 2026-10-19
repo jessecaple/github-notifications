@@ -5,7 +5,14 @@ the code and config don't tell you.
 
 ## Verifying a change
 
-Unit tests cover parsing only. For any change to the tray, pop-ups or links,
+Unit tests cover parsing and resource cleanup; pop-up fixtures use a private D-Bus server.
+Test real tray menu labels and click delivery on an isolated session bus with:
+
+```sh
+dbus-run-session -- env GITHUB_NOTIFICATIONS_ISOLATED_TEST=1 cargo test --locked isolated_tray_service_exposes_labels_and_delivers_clicks -- --ignored
+```
+
+For any change to the tray, pop-ups or links,
 run the app and observe it. You're done when the menu labels, the URLs a click
 opens, and the `Notify` calls all match what you expect.
 
