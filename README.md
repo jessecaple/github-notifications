@@ -76,6 +76,9 @@ preserves its pink color.
   200; "Open inbox on GitHub" shows the rest.
 - It works with github.com only, not GitHub Enterprise Server.
 - One copy runs per session.
+- It keeps up to 64 desktop notifications, closing the oldest when another arrives.
+  Pending desktop actions are limited to 32 and concurrent URL launchers to eight.
+  If those are busy, thread entries stay available in the menu to retry.
 
 ## Development
 

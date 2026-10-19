@@ -1,18 +1,18 @@
 //! GitHub Notifications: a GNOME top-bar icon for the GitHub
 //! notifications inbox.
 
+mod browser;
 mod desktop;
 mod github;
 mod tray;
 
 use std::collections::HashMap;
-use std::process::Command;
 use std::sync::mpsc;
-use std::thread;
 use std::time::{Duration, Instant};
 
 use ksni::blocking::TrayMethods;
 
+use browser::Browser;
 use desktop::Notifier;
 use github::{Client, Item, Poll};
 use tray::{InboxTray, State};
@@ -22,6 +22,24 @@ const INBOX_URL: &str = "https://github.com/notifications";
 const MIN_POLL: Duration = Duration::from_secs(60);
 /// More new threads than this at once become a single summary pop-up.
 const MAX_POPUPS: usize = 3;
+const MAX_COMMANDS: usize = 32;
+
+/// Desktop callbacks must not block behind a GitHub request or grow a queue
+/// indefinitely. Tray entries remain available to retry if the queue is full.
+#[derive(Clone)]
+pub struct Commands(mpsc::SyncSender<Cmd>);
+
+impl Commands {
+    pub fn send(&self, cmd: Cmd) -> bool {
+        match self.0.try_send(cmd) {
+            Ok(()) => true,
+            Err(e) => {
+                eprintln!("Couldn't queue desktop action: {e}");
+                false
+            }
+        }
+    }
+}
 
 pub enum Target {
     Thread(Item),
@@ -34,7 +52,8 @@ pub enum Cmd {
 }
 
 fn main() {
-    let (tx, rx) = mpsc::channel();
+    let (tx, rx) = mpsc::sync_channel(MAX_COMMANDS);
+    let tx = Commands(tx);
     let notifier = Notifier::new(tx.clone()).unwrap_or_else(|e| exit(&e));
     tray::install_icons();
     // Login autostart can run before GNOME's AppIndicator extension is ready.
@@ -45,8 +64,10 @@ fn main() {
         .unwrap_or_else(|e| exit(&format!("Couldn't create the tray icon: {e}")));
     let mut client = Client::new();
     let mut seen: Option<HashMap<String, String>> = None;
+    let mut browser = Browser::default();
 
     loop {
+        browser.reap();
         match client.poll() {
             Ok(Poll::Unchanged) => {
                 tray.update(|t| t.state = State::Ready);
@@ -67,10 +88,19 @@ fn main() {
         let next_poll = Instant::now() + client.poll_interval.max(MIN_POLL);
         while let Ok(cmd) = rx.recv_timeout(next_poll.saturating_duration_since(Instant::now())) {
             match cmd {
-                Cmd::Open(Target::Inbox) => open(INBOX_URL),
+                Cmd::Open(Target::Inbox) => {
+                    browser.open(INBOX_URL);
+                }
                 Cmd::Open(Target::Thread(item)) => {
-                    open(&client.web_url(&item));
-                    tray.update(move |t| t.items.retain(|i| i.id != item.id));
+                    let opened = browser.open(&client.web_url(&item));
+                    tray.update(move |t| {
+                        if opened {
+                            t.items.retain(|i| i.id != item.id);
+                        } else if !t.items.iter().any(|i| i.id == item.id) {
+                            // A busy or unavailable launcher leaves a retry in the menu.
+                            t.items.insert(0, item);
+                        }
+                    });
                 }
                 Cmd::Quit => {
                     tray.shutdown().wait();
@@ -100,14 +130,6 @@ fn announce(notifier: &Notifier, seen: &mut Option<HashMap<String, String>>, ite
             body = format!("{body} · {reason}");
         }
         notifier.show(&item.title, &body, Target::Thread(item.clone()));
-    }
-}
-
-fn open(url: &str) {
-    match Command::new("xdg-open").arg(url).spawn() {
-        // Reap it so it doesn't linger as a zombie.
-        Ok(mut child) => drop(thread::spawn(move || child.wait())),
-        Err(e) => eprintln!("Couldn't open {url}: {e}"),
     }
 }
 
